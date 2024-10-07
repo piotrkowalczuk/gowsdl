@@ -449,6 +449,7 @@ func (s *Client) call(ctx context.Context, soapAction string, request, response 
 	}
 
 	headers := make([]interface{}, len(s.headers))
+	copy(headers, s.headers)
 	headers = append(headers, &actionHeader{
 		Text: soapAction,
 	}, &messageIDHeader{
