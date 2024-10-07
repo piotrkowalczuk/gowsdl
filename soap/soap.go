@@ -450,11 +450,11 @@ func (s *Client) call(ctx context.Context, soapAction string, request, response 
 
 	headers := make([]interface{}, len(s.headers))
 	headers = append(headers, &actionHeader{
-		Text: "http://tempuri.org/ITerytWs1/CzyZalogowany",
+		Text: soapAction,
 	}, &messageIDHeader{
 		Text: "urn:uuid:" + uuid.New().String(),
 	}, &toHeader{
-		Text: "https://uslugaterytws1.stat.gov.pl/terytws1.svc",
+		Text: s.url,
 	})
 
 	if headers != nil && len(headers) > 0 {
