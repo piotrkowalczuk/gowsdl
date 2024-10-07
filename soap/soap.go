@@ -11,6 +11,8 @@ import (
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type SOAPEncoder interface {
@@ -39,6 +41,7 @@ type SOAPEnvelope struct {
 
 type SOAPHeader struct {
 	XMLName xml.Name `xml:"soap:Header"`
+	XmlNS   string   `xml:"xmlns:wsa,attr"`
 
 	Headers []interface{}
 }
@@ -239,6 +242,21 @@ func NewWSSSecurityHeader(user, pass, tokenID, mustUnderstand string) *WSSSecuri
 	return hdr
 }
 
+type actionHeader struct {
+	XMLName xml.Name `xml:"wsa:Action"`
+	Text    string   `xml:",chardata"`
+}
+
+type messageIDHeader struct {
+	XMLName xml.Name `xml:"wsa:MessageID"`
+	Text    string   `xml:",chardata"`
+}
+
+type toHeader struct {
+	XMLName xml.Name `xml:"wsa:To"`
+	Text    string   `xml:",chardata"`
+}
+
 type basicAuth struct {
 	Login    string
 	Password string
@@ -430,9 +448,19 @@ func (s *Client) call(ctx context.Context, soapAction string, request, response 
 		XmlNS: XmlNsSoapEnv,
 	}
 
-	if s.headers != nil && len(s.headers) > 0 {
+	headers := make([]interface{}, len(s.headers))
+	headers = append(headers, &actionHeader{
+		Text: "http://tempuri.org/ITerytWs1/CzyZalogowany",
+	}, &messageIDHeader{
+		Text: "urn:uuid:" + uuid.New().String(),
+	}, &toHeader{
+		Text: "https://uslugaterytws1.stat.gov.pl/terytws1.svc",
+	})
+
+	if headers != nil && len(headers) > 0 {
 		envelope.Header = &SOAPHeader{
-			Headers: s.headers,
+			XmlNS:   "http://www.w3.org/2005/08/addressing",
+			Headers: headers,
 		}
 	}
 
@@ -526,7 +554,7 @@ func (s *Client) call(ctx context.Context, soapAction string, request, response 
 	}
 
 	var mmaBoundary string
-	if s.opts.mma{
+	if s.opts.mma {
 		mmaBoundary, err = getMmaHeader(res.Header.Get("Content-Type"))
 		if err != nil {
 			return err
